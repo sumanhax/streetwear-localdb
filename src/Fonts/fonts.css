@@ -1,0 +1,6 @@
+@font-face {
+    font-family: 'Robson-Bold';
+    src: local('Robson-Bold'), url('./Robson-Bold.otf') format('opentype');
+    font-weight: 100;
+    font-style: normal;
+  }
