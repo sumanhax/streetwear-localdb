@@ -12,8 +12,8 @@ const initial_value = {
 let api = endPoints.admin;
 
 export const fetchadminlogin = createAsyncThunk("admin/fetchadminlogin",
-    async () => {
-        const result = await AxiosInstance.get(api)
+    async (email) => {
+        const result = await AxiosInstance.get(`${api}?email=${email}`)
         console.log("Axios Response for admin Api:", result);
         return result?.data;
     }

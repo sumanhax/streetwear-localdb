@@ -1,97 +1,87 @@
-import React, { useEffect, useState } from "react";
-import { TextField, Button, Box, Typography, Input } from "@mui/material";
-import { useDispatch } from "react-redux";
-import {
-  addproduct,
-  fetchedproductdetails,
-  updateproduct,
-} from "../Redux/ProductSlice";
-import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react"
+import { TextField, Button, Box, Typography, Input } from "@mui/material"
+import { useDispatch } from "react-redux"
+import { useForm, Controller } from "react-hook-form"
+import { fetchedproductdetails, updateproduct } from "../Redux/ProductSlice"
+import Swal from "sweetalert2"
+import { useNavigate } from "react-router-dom"
 
 const EditProduct = ({ pid, handleCloseEditProduct }) => {
-  let newid = pid?.id;
-  // console.log("new id", newid);
+  const newid = pid?.id
 
-  let navigate = useNavigate();
-  let dispatch = useDispatch();
-  const [imgState, setImage] = useState();
-  const [prevData, setPrevData] = useState(null);
-  const [formData, setFormData] = useState({
-    product_name: "",
-    category: "",
-    origin: "",
-    price: "",
-    details: "",
-    product_img: "",
-  });
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const [imgState, setImage] = useState(null)
+  const [prevData, setPrevData] = useState(null)
 
+  const { control, handleSubmit, setValue, reset } = useForm({
+    defaultValues: {
+      product_name: "",
+      category: "",
+      origin: "",
+      price: "",
+      details: "",
+      product_img: undefined,
+    },
+    mode:"onBlur"
+  })
 
   useEffect(() => {
     dispatch(fetchedproductdetails(newid))
       .then((result) => {
-        setPrevData(result?.payload);
-        // console.log(result?.payload);
-        
+        setPrevData(result?.payload)
       })
       .catch((error) => {
-        console.log("Error fetching product details", error);
-        swlAlert("Something went wrong", "error");
-      });
-  }, [dispatch]);
-
+        console.log("Error fetching product details", error)
+        swlAlert("Something went wrong", "error")
+      })
+  }, [dispatch, newid])
 
   useEffect(() => {
     if (prevData) {
-      setFormData({
+      reset({
         product_name: prevData.product_name,
         category: prevData.category,
         origin: prevData.origin,
         price: prevData.price,
         details: prevData.details,
-        product_img: prevData.product_img,
-      });
+      })
+      setImage(prevData.product_img)
     }
-  }, [prevData]);
+  }, [prevData, reset])
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const onSubmit = (data) => {
     const newData = {
-      ...formData,
-      product_img: imgState || formData.product_img, 
-    };
+      ...data,
+      product_img: imgState || prevData.product_img,
+    }
     const dataId = {
       newData: newData,
       newid: newid,
-    };
+    }
     dispatch(updateproduct(dataId))
-      .then((result) => {
-        swlAlert("Product updated successfully", "success");
-        // console.log("result", result);
+      .then(() => {
+        swlAlert("Product updated successfully", "success")
         handleCloseEditProduct()
-        // navigate(`/dashboard/${adminId}`);
       })
       .catch((error) => {
-        console.log("Error submitting form", error);
-        // swlAlert("Something went wrong", "error");
-      });
-  };
+        console.log("Error submitting form", error)
+      })
+  }
 
   const imgHandler = (file) => {
-    const fileReader = new FileReader();
-    fileReader.addEventListener("load", () => {
-      setImage(fileReader.result);
-    });
-    fileReader.readAsDataURL(file);
-  };
+    if (file && file.type.startsWith("image/")) {
+      const fileReader = new FileReader()
+      fileReader.addEventListener("load", () => {
+        setImage(fileReader.result)
+      })
+      fileReader.readAsDataURL(file)
+    } else if (file) {
+      // swlAlert("Please upload an image file", "error")
+      alert("Please upload an image file")
+
+    }
+  }
 
   const swlAlert = (message, type) => {
     Swal.fire({
@@ -99,13 +89,13 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
       text: message,
       icon: type,
       confirmButtonText: "OK",
-    });
-  };
+    })
+  }
 
   return (
     <Box
       component="form"
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit(onSubmit)}
       noValidate
       sx={{
         display: "flex",
@@ -121,61 +111,155 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
       <Typography variant="h5" color="primary" gutterBottom>
         Edit Product
       </Typography>
-      <TextField
-        label="Product Name"
-        variant="outlined"
-        fullWidth
-        required
+      <Controller
         name="product_name"
-        value={formData.product_name}
-        onChange={handleChange}
+        control={control}
+        rules={{
+          required: "Product name is required",
+          minLength: { value: 2, message: "Product name must be at least 2 characters long" },
+          validate: (value) => value.trim() !== "" || "Product name cannot be empty",
+        }}
+        render={({ field, fieldState: { error } }) => (
+          <TextField
+            {...field}
+            label="Product Name"
+            variant="outlined"
+            fullWidth
+            required
+            error={!!error}
+            helperText={error?.message}
+            onChange={(e) => field.onChange(e.target.value.trim())}
+          />
+        )}
       />
-      <TextField
-        label="Category"
-        variant="outlined"
-        fullWidth
-        required
+      <Controller
         name="category"
-        value={formData.category}
-        onChange={handleChange}
+        control={control}
+        rules={{
+          required: "Category is required",
+          validate: (value) => value.trim() !== "" || "Category cannot be empty",
+        }}
+        render={({ field, fieldState: { error } }) => (
+          <TextField
+            {...field}
+            label="Category"
+            variant="outlined"
+            fullWidth
+            required
+            error={!!error}
+            helperText={error?.message}
+            onChange={(e) => field.onChange(e.target.value.trim())}
+          />
+        )}
       />
-      <TextField
-        label="Price"
-        variant="outlined"
-        fullWidth
-        required
-        type="number"
+      <Controller
         name="price"
-        value={formData.price}
-        onChange={handleChange}
+        control={control}
+        rules={{
+          required: "Price is required",
+          pattern: {
+            value: /^\d+(\.\d{1,2})?$/,
+            message: "Price must be a number with up to 2 decimal places",
+          },
+          validate: (value) => Number.parseFloat(value) > 0 || "Price must be greater than 0",
+        }}
+        render={({ field, fieldState: { error } }) => (
+          <TextField
+            {...field}
+            label="Price"
+            variant="outlined"
+            fullWidth
+            required
+            type="number"
+            inputProps={{ step: "0.01" }}
+            error={!!error}
+            helperText={error?.message}
+          />
+        )}
       />
-      <TextField
-        label="Country of Origin"
-        variant="outlined"
-        fullWidth
-        required
+      <Controller
         name="origin"
-        value={formData.origin}
-        onChange={handleChange}
+        control={control}
+        rules={{
+          required: "Country of Origin is required",
+          validate: (value) => value.trim() !== "" || "Country of Origin cannot be empty",
+        }}
+        render={({ field, fieldState: { error } }) => (
+          <TextField
+            {...field}
+            label="Country of Origin"
+            variant="outlined"
+            fullWidth
+            required
+            error={!!error}
+            helperText={error?.message}
+            onChange={(e) => field.onChange(e.target.value.trim())}
+          />
+        )}
       />
-      <TextField
-        label="Description"
-        variant="outlined"
-        multiline
-        rows={4}
-        fullWidth
-        required
+      <Controller
         name="details"
-        value={formData.details}
-        onChange={handleChange}
+        control={control}
+        rules={{
+          required: "Description is required",
+          minLength: { value: 10, message: "Description must be at least 10 characters long" },
+          validate: (value) => value.trim() !== "" || "Description cannot be empty",
+        }}
+        render={({ field, fieldState: { error } }) => (
+          <TextField
+            {...field}
+            label="Description"
+            variant="outlined"
+            multiline
+            rows={4}
+            fullWidth
+            required
+            error={!!error}
+            helperText={error?.message}
+            onChange={(e) => field.onChange(e.target.value.trim())}
+          />
+        )}
       />
-      <Input
-        accept="image/*"
-        type="file"
-        fullWidth
-        sx={{ mt: 2 }}
-        onChange={(event) => imgHandler(event.target.files[0])}
+      {(imgState || prevData?.product_img) && (
+        <Box sx={{ textAlign: "center", mt: 1 }}>
+          <Typography variant="body2" gutterBottom>
+            Product Image:
+          </Typography>
+          <img
+            src={imgState || prevData?.product_img}
+            alt="Current Product"
+            style={{
+              width: "150px",
+              height: "150px",
+              objectFit: "cover",
+              borderRadius: "8px",
+            }}
+          />
+        </Box>
+      )}
+      <Controller
+        name="product_img"
+        control={control}
+        render={({ field }) => (
+          <Input
+            inputProps={{
+              accept: "image/*",
+              id: "product-image-upload",
+            }}
+            type="file"
+            fullWidth
+            sx={{ mt: 2 }}
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (file) {
+                imgHandler(file)
+                field.onChange(file)
+              }
+            }}
+          />
+        )}
       />
+
       <Button
         type="submit"
         variant="contained"
@@ -186,7 +270,8 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
         Update Details
       </Button>
     </Box>
-  );
-};
+  )
+}
 
-export default EditProduct;
+export default EditProduct
+

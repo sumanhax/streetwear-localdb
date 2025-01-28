@@ -18,6 +18,7 @@ import {
   cartItemsCount,
   createOrder,
   fetchcartitems,
+  qtyUpdate,
   removeCartItem,
 } from "../Redux/ProductSlice";
 import { useDispatch } from "react-redux";
@@ -30,39 +31,59 @@ function Cart() {
 
   let display = cartItems?.length === 0 ? "block" : "none";
   let userId = window.sessionStorage.getItem("userId");
+
   const dispatch = useDispatch();
   let navigate = useNavigate();
 
-  const swlAlert = (message, type) => {
-    Swal.fire({
-      title: type === "success" ? "Success" : "Error",
-      text: message,
-      icon: type,
-      confirmButtonText: "OK",
-    });
-  };
+const swlAlert = (message, type) => {
+Swal.fire({
+  title: type === "success" ? "Success" : "Error",
+  text: message,
+  icon: type,
+  confirmButtonText: "OK",
+});
+};
 
   useEffect(() => {
     dispatch(fetchcartitems())
       .then((result) => {
         const filteredItems = result?.payload.filter((x) => x.uid == userId);
         setCartItems(filteredItems);
-        console.log("result", result?.payload);
+        
+        // console.log("result", result?.payload);
       })
       .catch((err) => {
         console.log("Something went wrong", err);
       });
   }, [dispatch]);
 
+
   useEffect(() => {
     const total = cartItems.reduce((acc, item) => acc + item.qty, 0);
     setTotalQuantity(total);
-  }, [cartItems]);
+  }, [cartItems,totalQuantity]);
 
   const handleQuantityChange = (id, change) => {
     setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, qty: Math.max(1, item.qty + change) } : item
+      prevItems.map((item) =>{
+        if(item.id === id){
+        let newqty= { ...item, qty: Math.max(1, item.qty + change) }
+        //  console.log(newqty)
+        const qtyData={
+          itmId:newqty.id,
+          qty:newqty.qty
+        }
+        // console.log("id check",typeof(qtyData.itmId))
+        // console.log("qty check",typeof(qtyData.qty))
+
+        dispatch(qtyUpdate(qtyData)).unwrap().then((res)=>console.log("qtysuccess",res)).catch((err)=>console.log("qtyerror",err))
+         return newqty
+        }else{
+    
+          return item
+        }
+      }
+        
       )
     );
   };
@@ -88,7 +109,6 @@ function Cart() {
   };
 
   const handleOrder = () => {
-
     let date = new Date().toJSON().slice(0, 10).replace(/-/g, "/");
     let time = new Date().toTimeString().split(" ")[0];
 
@@ -123,6 +143,10 @@ function Cart() {
     }
   };
 
+  const navigateProductDetails=(id)=>{
+    navigate(`/productdetails/${id}`)
+  }
+
   const subtotal = cartItems?.reduce(
     (acc, item) => acc + item.price * item.qty,
     0
@@ -130,7 +154,7 @@ function Cart() {
 
   return (
     <>
-      <Navbar cartCount={totalQuantity} />
+      <Navbar cartcnt={totalQuantity}/>
       <Container maxWidth="xl" sx={{ paddingY: 3 }}>
         <Box
           sx={{
@@ -164,7 +188,7 @@ function Cart() {
                   sx={{ width: 50, height: 50, marginRight: 2 }}
                 />
                 <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                  <Typography variant="body1" sx={{ fontWeight: "bold", cursor:"pointer" }} onClick={()=>navigateProductDetails(item.product_id)}>
                     {item.product_name}
                   </Typography>
                   <Typography variant="body2">Price: {item.price}</Typography>
@@ -188,7 +212,7 @@ function Cart() {
                     <AddIcon />
                   </IconButton>
                 </Box>
-                <IconButton onClick={() => handleRemoveItem(item.id)}>
+                <IconButton sx={{color:"red"}} onClick={() => handleRemoveItem(item.id)}>
                   <DeleteOutlineIcon />
                 </IconButton>
               </Box>

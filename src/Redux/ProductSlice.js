@@ -7,6 +7,7 @@ const initial_value = {
   isLoading: false,
   status: 0,
   data: [],
+  cartData:[],
   error: null,
 };
 
@@ -64,7 +65,7 @@ export const addtocart = createAsyncThunk(
   async (productdata) => {
     // console.log("slice id",userdata);
     const result = await axiosInstance.post(api2,productdata);
-    console.log("Axios Response for cart Api:", result);
+    console.log("Axios Response for cartadd Api:", result);
     return result?.data;
   }
 );
@@ -91,10 +92,9 @@ export const removeCartItem = createAsyncThunk(
 
 export const fetchcartitems = createAsyncThunk(
   "product/fetchcartitems",
-  async () => {
-
-    const result = await axiosInstance.get(api2);
-    console.log("Axios Response for cart Api:", result);
+  async (uid) => {
+    const result = await axiosInstance.get(`${api2}`);
+    console.log("Axios Response for cartfetch Api:", result);
     return result?.data;
   }
 );
@@ -115,6 +115,17 @@ export const fetchOrder = createAsyncThunk(
     // console.log("slice id",userdata);
     const result = await axiosInstance.get(api3);
     console.log("Axios Response for ordervalue Api:", result);
+    return result?.data;
+  }
+);
+
+export const qtyUpdate = createAsyncThunk(
+  "product/qtyUpdate",
+  async (qtyData) => {
+    // console.log("qty api",`${api2}/${qtyData.itmId}`)
+    // console.log("qty to update",qtyData.qty)
+    const result = await axiosInstance.patch(`${api2}/${qtyData.itmId}`,{"qty":qtyData.qty});
+    console.log("Axios Response for qtyUpdate Api:", result);
     return result?.data;
   }
 );
@@ -141,20 +152,28 @@ export const productSlice = createSlice({
       // console.log("Action: ", action);
       state.error = action?.error?.message;
     });
-    builder.addCase(fetchedproductdetails.pending, (state) => {
-      state.isLoading = true;
-    });
-    builder.addCase(fetchedproductdetails.fulfilled, (state, action) => {
+    
+    // builder.addCase(fetchedproductdetails.pending, (state) => {
+    //   state.isLoading = true;
+    // });
+    // builder.addCase(fetchedproductdetails.fulfilled, (state, action) => {
+    //   state.isLoading = false;
+    //   state.status = action?.payload?.status;
+    //   state.data = action?.payload;
+    // });
+    // builder.addCase(fetchedproductdetails.rejected, (state, action) => {
+    //   // console.log("Action for Rejected:", action);
+    //   state.isLoading = false;
+    //   // console.log("Action: ", action);
+    //   state.error = action?.error?.message;
+    // });
+  
+    builder.addCase(fetchcartitems.fulfilled, (state, action) => {
       state.isLoading = false;
       state.status = action?.payload?.status;
-      state.data = action?.payload;
+      state.cartData = action?.payload;
     });
-    builder.addCase(fetchedproductdetails.rejected, (state, action) => {
-      // console.log("Action for Rejected:", action);
-      state.isLoading = false;
-      // console.log("Action: ", action);
-      state.error = action?.error?.message;
-    });
+  
   },
 });
 

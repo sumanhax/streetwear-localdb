@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { fetchprofile, fetchsignup, fetchUser } from "../../Redux/Slice";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { fetchsignup } from "../../Redux/Slice";
 import { useDispatch } from "react-redux";
 import Swal from "sweetalert2";
 import { Box, Container, TextField, Typography, Button } from "@mui/material";
@@ -9,15 +10,14 @@ import Navbar from "../Layout/Navbar/Navbar";
 const SignUpPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [imgState, setImage] = useState();
-  const [dataSet, setData] = useState();
-  const [errors, setErrors] = useState({});
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    profileImage: null,
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    mode: "onBlur",
   });
 
   const swlAlert = (message, type) => {
@@ -29,84 +29,27 @@ const SignUpPage = () => {
     });
   };
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  const validateFields = () => {
-    const newErrors = {};
-
-    if (!formData.fullName || formData.fullName.length < 3) {
-      newErrors.fullName = "Full Name must be at least 3 characters long.";
-    }
-
-    if (!formData.email || formData.email.length < 3) {
-      newErrors.email = "Email must be at least 3 characters long.";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Enter a valid email address.";
-    }
-
-    if (!formData.password || formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters long.";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const imgHandler = (file) => {
-    const fileReader = new FileReader();
-    fileReader.addEventListener("load", () => {
-      setImage(fileReader.result);
-      setFormData((prevData) => ({
-        ...prevData,
-        profileImage: file ? file.name : null,
-      }));
-    });
-    fileReader.readAsDataURL(file);
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
- 
-    
-
-    if (!validateFields()) {
-      swlAlert("Please fix errors before submitting", "error");
-      return;
-    }
-
-    const newData = {
-      fullName: formData.fullName,
-      email: formData.email,
-      password: formData.password,
-      profileImage: imgState,
+  const onSubmit = (data) => {
+    const trimmedData = {
+      fullName: data.fullName.trim(),
+      email: data.email.trim(),
+      password: data.password.trim(),
+      profileImage: data.profileImage[0]
+        ? URL.createObjectURL(data.profileImage[0])
+        : null,
     };
-          dispatch(fetchsignup(newData))
-            .then((result) => {
-              swlAlert("Account created successfully","success");
-              navigate("/signin");
-            })
-            .catch((error) => {
-              // console.log("Error submitting form", error);
-              swlAlert("Submission failed! Please try again",error)
-            });
+
+    dispatch(fetchsignup(trimmedData))
+      .then(() => {
+        swlAlert("Account created successfully", "success");
+        navigate("/signin");
+      })
+      .catch(() => {
+        swlAlert("Submission failed! Please try again", "error");
+      });
   };
 
-  // useEffect(() => {
-  //   dispatch(fetchUser())
-  //   .then((result) => {
-  //     setData(result?.payload);
-      
-  //   })
-  //   .catch((error) => {
-  //     console.log("Error submitting form", error);
-  //   });   
-  // }, [dispatch]);
+  const profileImage = watch("profileImage");
 
   return (
     <>
@@ -136,7 +79,7 @@ const SignUpPage = () => {
           </Typography>
           <Box
             component="form"
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onSubmit)}
             noValidate
             sx={{ mt: 1 }}
           >
@@ -145,23 +88,40 @@ const SignUpPage = () => {
               required
               fullWidth
               label="Full Name"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
+              {...register("fullName", {
+                required: "Full Name is required",
+                minLength: {
+                  value: 3,
+                  message: "Full Name must be at least 3 characters long.",
+                },
+                validate: (value) =>
+                  value.trim() !== "" ||
+                  "Full Name x cannot be empty or whitespace only.",
+              })}
               error={!!errors.fullName}
-              helperText={errors.fullName}
+              helperText={errors.fullName?.message}
             />
             <TextField
               margin="normal"
               required
               fullWidth
               label="Email Address"
-              name="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleChange}
+              {...register("email", {
+                required: "Email is required",
+                minLength: {
+                  value: 10,
+                  message: "Email must be at least 10 characters long.",
+                },
+                pattern: {
+                  value: /\S+@\S+\.\S+/,
+                  message: "Enter a valid email address.",
+                },
+                validate: (value) =>
+                  value.trim() !== "" ||
+                  "Email cannot be empty or whitespace only.",
+              })}
               error={!!errors.email}
-              helperText={errors.email}
+              helperText={errors.email?.message}
             />
             <TextField
               margin="normal"
@@ -169,20 +129,41 @@ const SignUpPage = () => {
               fullWidth
               label="Password"
               type="password"
-              name="password"
-              autoComplete="new-password"
-              value={formData.password}
-              onChange={handleChange}
+              {...register("password", {
+                required: "Password is required",
+                minLength: {
+                  value: 8,
+                  message: "Password must be at least 8 characters long.",
+                },
+                validate: (value) =>
+                  value.trim() !== "" ||
+                  "Password cannot be empty or whitespace only.",
+              })}
               error={!!errors.password}
-              helperText={errors.password}
+              helperText={errors.password?.message}
             />
-            <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
+            <Box
+              sx={{
+                mt: 2,
+                display: "flex",
+                alignItems: "center",
+                flexDirection: "column",
+              }}
+            >
               <input
                 accept="image/*"
                 style={{ display: "none" }}
                 id="file-upload"
                 type="file"
-                onChange={(event) => imgHandler(event.target.files[0])}
+                {...register("profileImage", {
+                  validate: {
+                    isImage: (files) =>
+                      (files &&
+                        files[0] &&
+                        files[0].type.startsWith("image/")) ||
+                      "Only image files are allowed.",
+                  },
+                })}
               />
               <label htmlFor="file-upload">
                 <Button
@@ -194,9 +175,14 @@ const SignUpPage = () => {
                   Upload Profile Image
                 </Button>
               </label>
-              {formData.profileImage && (
-                <Typography variant="body2" sx={{ ml: 2 }}>
-                  {formData.profileImage}
+              {profileImage && profileImage[0] && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  {profileImage[0].name}
+                </Typography>
+              )}
+              {errors.profileImage && (
+                <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                  {errors.profileImage.message}
                 </Typography>
               )}
             </Box>

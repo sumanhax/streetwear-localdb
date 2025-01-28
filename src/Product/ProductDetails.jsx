@@ -1,28 +1,36 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, Grid, Paper, Divider } from "@mui/material";
+import { Box, Typography, Button, Grid, Paper, Divider,IconButton,TextField } from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../Componenets/Layout/Navbar/Navbar";
 import { useDispatch, useSelector } from "react-redux";
+import RemoveShoppingCartIcon from '@mui/icons-material/RemoveShoppingCart';
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
 import {
   addtocart,
   cartCheck,
   cartPatch,
   fetchcartitems,
   fetchedproductdetails,
+  qtyUpdate,
+  removeCartItem,
 } from "../Redux/ProductSlice";
 import Swal from "sweetalert2";
+import { Dataset } from "@mui/icons-material";
 
 const ProductDetails = () => {
-  // console.log("props",id);
   const dispatch = useDispatch();
   let [dataSet, setdataSet] = useState();
   let [prevCartdataSet, setCarddataSet] = useState();
-  const [cartItems, setCartItems] = useState();
-
+  const [cartItems, setCartItems] = useState([]);
+  const [foundItms, setFoundItem] = useState();
+  
   let navigate = useNavigate();
   let userId = window.sessionStorage.getItem("userId");
   let isUserLogged = window.sessionStorage.getItem("isUserLogged");
-
+  
   const swlAlert = (message, type) => {
     Swal.fire({
       title: type === "success" ? "Success" : "Error",
@@ -31,68 +39,119 @@ const ProductDetails = () => {
       confirmButtonText: "OK",
     });
   };
-
+  
   let { id } = useParams();
-  // console.log("id",id);
+  console.log("params",id);
 
-  const { data,isLoading,error } = useSelector((state) => state.product);
-  // console.log("use selector", dataSet);
+  useEffect(() => {
+    dispatch(fetchcartitems())
+      .then((result) => {
+        const filteredItems = result?.payload?.filter((x) => x.uid == userId);
+        setCartItems(filteredItems);
+        setFoundItem(filteredItems.find(x=>x.product_id==id))
+        // console.log("filteredItems", filteredItems);
+      })
+      .catch((err) => {
+        console.log("Something went wrong", err);
+      });
+  }, [dispatch,dataSet]);
+
+  const navigateCart=()=>{
+    navigate('/cart')
+  }
+
+  const handleQuantityChange = (id, change) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>{
+        if(item.id === id){
+        let newqty= { ...item, qty: Math.max(1, item.qty + change) }
+        //  console.log(newqty)
+        const qtyData={
+          itmId:newqty.id,
+          qty:newqty.qty
+        }
+        // console.log("id check",typeof(qtyData.itmId))
+        // console.log("qty check",typeof(qtyData.qty))
+        dispatch(qtyUpdate(qtyData)).unwrap()
+        .then((res)=>{
+        // console.log("res.id",res?.product_id)
+
+          dispatch(fetchedproductdetails(res?.product_id))
+          .then((result) => {
+            console.log("result", result);
+            setdataSet(result?.payload);
+          })
+          .catch((err) => {
+            console.log("something wrong", err);
+          });
+
+          console.log("qtysuccess",res)
+        }).catch((err)=>console.log("qtyerror",err))
+         return newqty
+        }else{
+          return item
+        }
+      }
+        
+      )
+    );
+  };
+
+  const handleRemoveItem = (id) => {
+    dispatch(removeCartItem(id))
+      .then(() => {
+        fetchProductDetails()
+        swlAlert("Product Removed from cart", "success");
+      })
+      .catch((err) => {
+        console.log("Something went wrong", err);
+      });
+  };
 
   let handleAddtocart = (pid) => {
-    // console.log("product id",pid);
-
-    // dispatch(fetchcartitems())
-    //   .then((result) => {
-    //     let exist = result?.payload.filter(
-    //       (x) => x.uid == userId && x.product_id == pid
-    //     );
-
-    //     if (exist) {
-    //       //  console.log("exist reposnse",exist[0].id);
-    //       const patchdataSet = {
-    //         id: exist[0].id,
-    //         qty: parseInt(exist[0].qty + 1),
-    //       };
-    //       console.log("cart id from exist", patchdataSet.id);
-
-    //       dispatch(cartPatch(patchdataSet))
-    //         .then((result) => {
-    //           console.log("result", result);
-    //         })
-    //         .catch((err) => {
-    //           console.log("something wrong", err);
-    //         });
-    //       console.log("exist true",exist[0].id);
-
-    //     } else if(!exist) {
-
-    //     }
-
-    //   })
-    //   .catch((err) => {
-    //     console.log("Something went wrong", err);
-    //   });
-
+    // const found = cartItems?.find((x) => x.product_id == pid);
+    // setFoundItem(found)
+    // console.log("found",found)
     if (isUserLogged) {
-      let cartdataSet = {
-        uid: userId,
-        product_id: dataSet?.id,
-        product_name: dataSet?.product_name,
-        price: dataSet?.price,
-        qty: 1,
-        product_img: dataSet?.product_img,
-      };
-      dispatch(addtocart(cartdataSet))
-        .then((result) => {
-          // console.log("result",result);
-          if (isUserLogged) {
-            swlAlert("Product added to cart successfully", "success");
-          }
-          navigate("/cart");
-        })
-        .catch((err) => {
-          console.log("something wrong", err);
-        });
+      // if (found) {
+      //   // console.log("cartitems true")
+      //   // console.log("cart ",cartItems)
+      //   const qtyData = {
+      //     itmId: found.id,
+      //     qty: found.qty + 1,
+      //   };
+      //   dispatch(qtyUpdate(qtyData))
+      //     .unwrap()
+      //     .then((res) => {
+      //       console.log("qtysuccess", res);
+      //       navigate("/cart");
+      //       swlAlert("Quantity updated successfully", "success");
+      //     })
+      //     .catch((err) => console.log("qtyerror", err));
+      // } 
+      // else {
+        let cartdataSet = {
+          uid: userId,
+          product_id: dataSet?.id,
+          product_name: dataSet?.product_name,
+          price: dataSet?.price,
+          qty: 1,
+          product_img: dataSet?.product_img,
+        };
+
+        dispatch(addtocart(cartdataSet))
+          .then((result) => {
+            // console.log("result",result);
+            if (isUserLogged) {
+              swlAlert("Product added to cart successfully", "success");
+            }
+            // navigate("/cart");
+            fetchProductDetails()
+          })
+          .catch((err) => {
+            console.log("something wrong", err);
+          });
+      // }
     } else {
       navigate("/cart");
     }
@@ -102,20 +161,25 @@ const ProductDetails = () => {
     navigate(`/allproduct/${cat}`);
   };
 
+const fetchProductDetails=()=>{
+  dispatch(fetchedproductdetails(id))
+  .then((result) => {
+    console.log("result", result);
+    setdataSet(result?.payload);
+  })
+  .catch((err) => {
+    console.log("something wrong", err);
+  });
+}
+
   useEffect(() => {
-    dispatch(fetchedproductdetails(id))
-      .then((result) => {
-        console.log("result",result);
-        setdataSet(result?.payload);
-      })
-      .catch((err) => {
-        console.log("something wrong", err);
-      });
+    fetchProductDetails()
+      
   }, [dispatch]);
 
   return (
     <>
-      <Navbar />
+      <Navbar cartcnt={cartItems}/>
       <Box
         sx={{
           display: "flex",
@@ -238,7 +302,8 @@ const ProductDetails = () => {
             </Typography> */}
 
               <Divider sx={{ my: 2 }} />
-
+           {!foundItms && 
+           
               <Button
                 onClick={() => handleAddtocart(dataSet?.id)}
                 variant="contained"
@@ -260,6 +325,66 @@ const ProductDetails = () => {
               >
                 Add to Cart
               </Button>
+           }
+              
+             {foundItms &&
+              <Box
+              key={dataSet?.id}
+              sx={{ display: "flex", alignItems: "center", mb: 2 }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", mx: 2 }}>
+                <IconButton onClick={() => handleQuantityChange(foundItms?.id, -1)}>
+                  <RemoveIcon />
+                </IconButton>
+                <TextField
+                  value={foundItms?.qty}
+                  inputProps={{
+                    min: 1,
+                    style: { textAlign: "center", width: "40px" },
+                  }}
+                  variant="outlined"
+                  size="small"
+                  sx={{ mx: 1 }}
+                  disabled
+                />
+                <IconButton onClick={() => handleQuantityChange(foundItms?.id, 1)}>
+                  <AddIcon />
+                </IconButton>
+              </Box>
+              <Box sx={{display:"flex", gap:2}}>
+              {/* <IconButton sx={{backgroundColor:"#000",color:"red"}} onClick={() => handleRemoveItem(foundItms?.id)}>
+                <RemoveShoppingCartIcon />
+              </IconButton> */}
+              <Button
+                onClick={() => handleRemoveItem(foundItms?.id)}
+                variant="contained"
+                color="primary"
+                size="small"
+                fullWidth
+                sx={{
+                  // py: 1.5,
+                  // fontSize: "1rem",
+                  // fontWeight: "bold",
+                  borderRadius: 1,
+                  backgroundColor: "black",
+                  color: "#91ff00",
+                  "&:hover": {
+                    backgroundColor: "#000001",
+                    color: "#91ff00",
+                  },
+                }}
+              >
+                Remove from Cart
+              </Button>
+              <IconButton sx={{backgroundColor:"#91ff00",color:"#000",transition:"all ease .2s","&:hover": {
+                    backgroundColor: "#000001",
+                    color: "#91ff00",
+                  }}} onClick={() => navigateCart()}>
+                <ShoppingCartCheckoutIcon />
+              </IconButton>
+              </Box>
+            </Box>
+             }
             </Grid>
           </Grid>
         </Paper>

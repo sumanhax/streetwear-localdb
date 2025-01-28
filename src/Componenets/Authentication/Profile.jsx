@@ -6,7 +6,7 @@ import { fetchprofile } from '../../Redux/Slice';
 import Swal from 'sweetalert2';
 import Navbar from '../Layout/Navbar/Navbar';
 import { fetchOrder } from '../../Redux/ProductSlice';
-import { Dataset } from '@mui/icons-material';
+
 
 const Profile = ({ name, email, profileImage }) => {
   let { id } = useParams();
@@ -14,6 +14,7 @@ const Profile = ({ name, email, profileImage }) => {
   let [orders, setOrder] = useState();
 
   let navigate = useNavigate();
+  const dispatch = useDispatch();
   const uid= window.sessionStorage.getItem("userId");
     
 
@@ -34,7 +35,6 @@ const Profile = ({ name, email, profileImage }) => {
     });
   };
 
-  const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchprofile(id))
@@ -54,7 +54,7 @@ const Profile = ({ name, email, profileImage }) => {
       .catch((error) => {
         console.log('Error ', error);
       });
-  }, [dispatch, id]);
+  }, [ id]);
 
 
 

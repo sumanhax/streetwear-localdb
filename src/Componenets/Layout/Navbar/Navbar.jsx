@@ -12,14 +12,21 @@ import Badge from '@mui/material/Badge';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Container } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchcartitems } from '../../../Redux/ProductSlice';
 
-function Navbar({cartCount}) {
+
+function Navbar({cartcnt}) {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  // const cartItemCount = 3; 
+  const [cartItems, setCartItems] = useState([]);
+  const [cartCount,setcartCount]=useState(0)
+
+  // const {cartData}=useSelector((state)=>state?.product)
+// console.log("cartdata redux",cartData)
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -36,12 +43,31 @@ function Navbar({cartCount}) {
   // const curl=window.sessionStorage.setItem("curl","home")
 
   const [color,setColor]=useState("transparent")
-  let curl=window.location.href
+  
+  let curl=useLocation()
+  const dispatch=useDispatch()
+  
+useEffect(()=>{
+    curl.pathname=="/"?setColor("transparent"):setColor("#000")
+  },[])
 
+  useEffect(() => {
+      dispatch(fetchcartitems())
+        .then((result) => {
+          const filteredItems = result?.payload.filter((x) => x.uid == userId);
+          setCartItems(filteredItems)
+          // console.log("total cart",cartCount)
+        })
+        .catch((err) => {
+          console.log("Something went wrong", err);
+        });
+    }, [dispatch,cartcnt]);
 
 useEffect(()=>{
-    curl=="http://localhost:3000/"?setColor("transparent"):setColor("#000")
-  },[])
+  setcartCount(cartItems.reduce((acc,curr)=>{  
+    return acc+curr.qty
+    },0));
+},[cartItems])
 
   return (
     <Container maxWidth="xxl" sx={{ padding: 0,position:"relative" }} >
@@ -82,7 +108,7 @@ useEffect(()=>{
                   {isUserLogged ? `Hi, ${userName}👋` : "Login"}
                 </MenuItem>
                 <MenuItem component={Link} to="/cart" onClick={handleMenuClose}>
-                  <Badge badgeContent={cartCount} color="secondary">
+                  <Badge badgeContent={cartCount} color="secondary" showZero>
                     <ShoppingCartIcon />
                   </Badge>
                 </MenuItem>
@@ -96,7 +122,7 @@ useEffect(()=>{
                 {isUserLogged ? `Hi, ${userName}👋` : "Login"}
               </Button>
               <IconButton color="inherit" component={Link} to="/cart">
-                <Badge badgeContent={cartCount} color="secondary">
+                <Badge badgeContent={cartCount} color="secondary" showZero>
                   <ShoppingCartIcon />
                 </Badge>
               </IconButton>

@@ -18,10 +18,12 @@ import Navbar from "../Componenets/Layout/Navbar/Navbar";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { addtocart, fetchedproduct } from "../Redux/ProductSlice";
+import { addtocart, fetchcartitems, fetchedproduct } from "../Redux/ProductSlice";
 import Swal from "sweetalert2";
-import { Dataset } from "@mui/icons-material";
-import SearchIcon from '@mui/icons-material/Search';
+import SearchIcon from "@mui/icons-material/Search";
+import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
+import _ from "lodash";
+
 
 const AllProduct = () => {
   const [dataSet, setDataSet] = useState([]);
@@ -29,30 +31,38 @@ const AllProduct = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortType, setSortType] = useState("");
-  let [searchTxt, setSerachTerm] = useState("");
-
+  let [searchTxt, setSearchTerm] = useState("");
+  const [cartItems, setCartItems] = useState([]);
+    const [foundItms, setFoundItem] = useState();
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { all } = useParams();
 
-  // console.log("params recieved", all);
-
   let userId = window.sessionStorage.getItem("userId");
   let isUserLogged = window.sessionStorage.getItem("isUserLogged");
 
-  // const {data, isLoading,error}=useSelector((state)=>state.product)
-// console.log("useselector data",data);
+  const swlAlert = (message, type) => {
+    Swal.fire({
+      title: type === "success" ? "Success" : "Error",
+      text: message,
+      icon: type,
+      confirmButtonText: "OK",
+    });
+  };
+
+  const navigateCart = () => {
+    navigate("/cart");
+  };
 
   useEffect(() => {
-    if (all == "all") {
+    if (all === "all") {
       dispatch(fetchedproduct())
         .then((result) => {
-          // console.log("product", result);
           const products = result?.payload;
           setDataSet(products);
           setFilteredData(products);
-          
+
           const uniqueCategories = [
             ...new Set(products?.map((product) => product.category)),
           ];
@@ -64,12 +74,12 @@ const AllProduct = () => {
     } else {
       dispatch(fetchedproduct())
         .then((result) => {
-          const products = result?.payload?.data;
+          const products = result?.payload;
           setDataSet(products);
           setFilteredData(
             products.filter((product) => product.category === all)
           );
-          // console.log("else executed");
+
           const uniqueCategories = [
             ...new Set(products.map((product) => product.category)),
           ];
@@ -79,19 +89,48 @@ const AllProduct = () => {
           console.log("Something went wrong", err);
         });
     }
-  }, [dispatch, all]);
+  }, [all]);
 
-  const swlAlert = (message, type) => {
-    Swal.fire({
-      title: type === "success" ? "Success" : "Error",
-      text: message,
-      icon: type,
-      confirmButtonText: "OK",
-    });
+  //  useEffect(() => {
+  //      if(isUserLogged){
+  //       dispatch(fetchcartitems())
+  //        .then((result) => {
+  //          const filteredItems = result?.payload?.filter((x) => x.uid == userId);
+  //          setCartItems(filteredItems);
+  //          setFoundItem(filteredItems.find(x=>x.product_id==id))
+  //          console.log("filteredItems", filteredItems);
+  //        })
+  //        .catch((err) => {
+  //          console.log("Something went wrong", err);
+  //        });
+  //      }
+  //    }, [dispatch,dataSet]);
+
+  const debounceSearch = _.debounce((searchValue) => {
+    setSearchTerm(searchValue);
+  }, 500);
+
+  const handleSearchChange = (event) => {
+    debounceSearch(event.target.value);
   };
 
-  const handleSingleProduct = (id) => {
-    navigate(`/productdetails/${id}`);
+  const debounceSort = _.debounce((sortValue) => {
+    const sortedData = [...filteredData];
+    if (sortValue === "ab") {
+      sortedData.sort((a, b) => a.product_name.localeCompare(b.product_name));
+    } else if (sortValue === "ba") {
+      sortedData.sort((a, b) => b.product_name.localeCompare(a.product_name));
+    } else if (sortValue === "lh") {
+      sortedData.sort((a, b) => a.price - b.price);
+    } else if (sortValue === "hl") {
+      sortedData.sort((a, b) => b.price - a.price);
+    }
+    setFilteredData(sortedData);
+    setSortType(sortValue);
+  }, 500);
+
+  const handleSortChange = (event) => {
+    debounceSort(event.target.value);
   };
 
   const handleCategoryChange = (event) => {
@@ -106,53 +145,12 @@ const AllProduct = () => {
     }
   };
 
-  const handleSortChange = (event) => {
-    const type = event.target.value;
-    setSortType(type);
-    const sortedData = [...filteredData];
-    if (type === "name") {
-      sortedData.sort((a, b) => a.product_name.localeCompare(b.product_name));
-    } else if (type === "price") {
-      sortedData.sort((a, b) => a.price - b.price);
-    }
-    setFilteredData(sortedData);
+  const handleSingleProduct = (id) => {
+    navigate(`/productdetails/${id}`);
   };
 
   let handleAddtocart = (pid) => {
-    // dispatch(fetchcartitems())
-    //   .then((result) => {
-    //     let exist = result?.payload.filter(
-    //       (x) => x.uid == userId && x.product_id == pid
-    //     );
-
-    //     if (exist) {
-    //       //  console.log("exist reposnse",exist[0].id);
-    //       const patchData = {
-    //         id: exist[0].id,
-    //         qty: parseInt(exist[0].qty + 1),
-    //       };
-    //       console.log("cart id from exist", patchData.id);
-
-    //       dispatch(cartPatch(patchData))
-    //         .then((result) => {
-    //           console.log("result", result);
-    //         })
-    //         .catch((err) => {
-    //           console.log("something wrong", err);
-    //         });
-    //       console.log("exist true",exist[0].id);
-
-    //     } else if(!exist) {
-
-    //     }
-
-    //   })
-    //   .catch((err) => {
-    //     console.log("Something went wrong", err);
-    //   });
     let filtered = dataSet.filter((x) => x.id == pid);
-    console.log("filtered", filtered);
-
     if (isUserLogged) {
       let cartData = {
         uid: userId,
@@ -165,7 +163,6 @@ const AllProduct = () => {
 
       dispatch(addtocart(cartData))
         .then((result) => {
-          // console.log("result",result);
           if (isUserLogged) {
             swlAlert("Product added to cart successfully", "success");
           }
@@ -216,74 +213,72 @@ const AllProduct = () => {
           </Typography>
 
           <Container
-  maxWidth="xl"
-  style={{ paddingLeft: "4rem", paddingRight: "4rem" }}
->
-  <Box
-    sx={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      alignContent:"center",
-      marginTop: 7,
-      flexWrap: "wrap",
-      padding:"1rem", background:"#f9f8f8",
-      gap: 2,
-    }}
-  >
-    <FormControl sx={{ minWidth: 150 }}>
-      {/* <InputLabel id="category-select-label">Category</InputLabel> */}
-      <Select
-        labelId="category-select-label"
-        value={selectedCategory}
-        onChange={handleCategoryChange}
-        displayEmpty
-      >
-        <MenuItem value="">
-          <em>All Categories</em>
-        </MenuItem>
-        {categories.map((category, index) => (
-          <MenuItem key={index} value={category}>
-            {category}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+            maxWidth="xl"
+            style={{ paddingLeft: "4rem", paddingRight: "4rem" }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 7,
+                flexWrap: "wrap",
+                padding: "1rem",
+                background: "#f9f8f8",
+                gap: 2,
+              }}
+            >
+              <FormControl sx={{ minWidth: 150 }}>
+                <Select
+                  labelId="category-select-label"
+                  value={selectedCategory}
+                  onChange={handleCategoryChange}
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    <em>All Categories</em>
+                  </MenuItem>
+                  {categories.map((category, index) => (
+                    <MenuItem key={index} value={category}>
+                      {category}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-    {/* Search Bar */}
-    <TextField
-      variant="outlined"
-      placeholder="Search..."
-      // value="dfdd"
-      onChange={(event)=>{setSerachTerm(event.target.value)}}
-      sx={{ flexGrow: 1, maxWidth: 300 }}
-      InputProps={{
-        endAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon />
-          </InputAdornment>
-        ),
-      }}
-    />
+              {/* Search Bar */}
+              <TextField
+                variant="outlined"
+                placeholder="Search..."
+                onChange={handleSearchChange}
+                sx={{ flexGrow: 1, maxWidth: 300 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
 
-    <FormControl sx={{ minWidth: 150 }}>
-      {/* <InputLabel id="sort-select-label">Sort By</InputLabel> */}
-      <Select
-        labelId="sort-select-label"
-        value={sortType}
-        onChange={handleSortChange}
-        displayEmpty
-      >
-        <MenuItem value="">
-          <em>None</em>
-        </MenuItem>
-        <MenuItem value="name">Name</MenuItem>
-        <MenuItem value="price">Price</MenuItem>
-      </Select>
-    </FormControl>
-  </Box>
-</Container>
-
+              <FormControl sx={{ minWidth: 150 }}>
+                <Select
+                  labelId="sort-select-label"
+                  value={sortType}
+                  onChange={handleSortChange}
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  <MenuItem value="ab">Name[A-B]</MenuItem>
+                  <MenuItem value="ba">Name[B-A]</MenuItem>
+                  <MenuItem value="lh">Price[Low-High]</MenuItem>
+                  <MenuItem value="hl">Price[High-Low]</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </Container>
 
           <Box
             sx={{
@@ -293,94 +288,122 @@ const AllProduct = () => {
             }}
           >
             <Grid container spacing={3} sx={{ marginTop: 0 }}>
-            {filteredData?.filter((x) => {
-                  if (searchTxt == "") {
+              {filteredData
+                ?.filter((x) => {
+                  if (searchTxt === "") {
                     return x;
                   } else if (
-                    x?.product_name .toLowerCase().includes(searchTxt.toLowerCase()) || x?.category.toLowerCase().includes(searchTxt.toLowerCase())
+                    x?.product_name
+                      .toLowerCase()
+                      .includes(searchTxt.toLowerCase()) ||
+                    x?.category.toLowerCase().includes(searchTxt.toLowerCase())
                   ) {
                     return x;
                   }
-                }).map((product, index) => (
-                <Grid item xs={12} sm={6} md={3} key={index}>
-                  <Paper elevation={3} sx={{ padding: 2 }}>
-                    <Box
-                      sx={{
-                        overflow: "hidden", // Ensures the zoom effect is contained within the card
-                        borderRadius: 3,
-                      }}
-                    >
-                      <img
-                        src={product?.product_img}
-                        alt={product?.product_name}
-                        style={{
-                          width: "100%",
-                          borderRadius: 3,
-                          transition: "transform 0.3s ease-in-out", // Smooth transition
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.transform = "scale(1.05)")
-                        } // Zoom in on hover
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.transform = "scale(1)")
-                        } // Reset on mouse leave
-                      />
-                    </Box>
-
-                    <Typography
-                      variant="h6"
-                      sx={{ marginTop: 1, fontWeight: "bold" }}
-                    >
-                      {product.product_name}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ marginTop: 1, fontSize: "15px" }}
-                    >
-                      MRP: ₹
-                      <span
-                        style={{
-                          fontSize: "15px",
-                          fontWeight: "600",
-                        }}
-                      >
-                        {product.price}
-                      </span>
-                    </Typography>
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginTop: 2,
-                      }}
-                    >
-                      <Button
-                        onClick={() => handleSingleProduct(product.id)}
-                        variant="contained"
+                })
+                .map((product, index) => (
+                  <Grid item xs={12} sm={6} md={3} key={index}>
+                    <Paper elevation={3} sx={{ padding: 2 }}>
+                      <Box
                         sx={{
-                          backgroundColor: "black",
-                          color: "#91ff00",
-                          "&:hover": {
-                            backgroundColor: "#000001",
-                            color: "#91ff00",
-                          },
+                          overflow: "hidden",
+                          borderRadius: 3,
                         }}
                       >
-                        Buy Now
-                      </Button>
-                      <IconButton
-                        color="secondary"
-                        aria-label="add to cart"
-                        onClick={() => handleAddtocart(product.id)}
+                        <img
+                          src={product?.product_img}
+                          alt={product?.product_name}
+                          style={{
+                            width: "100%",
+                            borderRadius: 3,
+                            transition: "transform 0.3s ease-in-out",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.transform = "scale(1.05)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.transform = "scale(1)")
+                          }
+                        />
+                      </Box>
+
+                      <Typography
+                        variant="h6"
+                        sx={{ marginTop: 1, fontWeight: "bold" }}
                       >
-                        <ShoppingCartIcon />
-                      </IconButton>
-                    </Box>
-                  </Paper>
-                </Grid>
-              ))}
+                        {product.product_name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ marginTop: 1, fontSize: "15px" }}
+                      >
+                        MRP: ₹
+                        <span
+                          style={{
+                            fontSize: "15px",
+                            fontWeight: "600",
+                          }}
+                        >
+                          {product.price}
+                        </span>
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: 2,
+                        }}
+                      >
+                        <Button
+                          onClick={() => handleSingleProduct(product.id)}
+                          variant="contained"
+                          sx={{
+                            backgroundColor: "black",
+                            color: "#91ff00",
+                            "&:hover": {
+                              backgroundColor: "#000001",
+                              color: "#91ff00",
+                            },
+                          }}
+                        >
+                          Buy Now
+                        </Button>
+
+                        {/* {
+                          cartItems?setFoundItem(cartItems.find(x=>x.product_id==product.id)):null
+                        } */}
+                        {/* {foundItms &&
+                         <IconButton
+                         sx={{
+                           backgroundColor: "#91ff00",
+                           color: "#000",
+                           transition: "all ease .2s",
+                           "&:hover": {
+                             backgroundColor: "#000001",
+                             color: "#91ff00",
+                           },
+                         }}
+                         onClick={() => navigateCart()}
+                       >
+                         <ShoppingCartCheckoutIcon />
+                       </IconButton>
+                        } */}
+                        
+                        {/* <IconButton
+                          color="secondary"
+                          aria-label="add to cart"
+                          onClick={() => handleAddtocart(product.id)}
+                        >
+                          <ShoppingCartIcon />
+                        </IconButton> */}
+
+                       
+                      </Box>
+                    </Paper>
+                  </Grid>
+                ))}
             </Grid>
           </Box>
         </Box>

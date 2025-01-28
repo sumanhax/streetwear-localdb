@@ -26,9 +26,9 @@ const Routing = () => {
     <Routes>
         <Route path='' element={<LandingPage/>} />
         <Route path='*' element={<PNF/>} />
+
         <Route path='signin' element={<SignIn/>} />
         <Route path='signup' element={<SignUpPage/>} />
-
 
         <Route element={<ProtectedRoutes/>}>
         <Route path='profile/:id' element={<Profile/>} />
@@ -48,8 +48,6 @@ const Routing = () => {
 
         <Route path='error' element={<Error/>} />
         <Route path='error2' element={<Error2/>} />
-
-
     </Routes>
     
 </Router>

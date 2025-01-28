@@ -93,6 +93,7 @@ function LandingPage() {
     {isLoading && <h1>Loading..</h1>}
     {error && <h1>Error..</h1>}
       <Navbar />
+
       <Container maxWidth="xl" sx={{ padding: 0 }}>
         {/* Hero Section */}
         <Box
@@ -257,7 +258,7 @@ function LandingPage() {
  </Box> */}
         </Box>
 
-        {/* Award Section */}
+        {/* trendy product */}
         <Box
           sx={{
             paddingY: 10,
@@ -281,7 +282,7 @@ function LandingPage() {
                     elevation={3}
                     sx={{ padding: 2, position: "relative" }}
                   >
-                    {/* Hot Badge */}
+             
                     <Box
                       sx={{
                         position: "absolute",
@@ -301,7 +302,7 @@ function LandingPage() {
 
                     <Box
                       sx={{
-                        overflow: "hidden", // Ensure the zoom effect is contained within the card
+                        overflow: "hidden", 
                         borderRadius: 4,
                       }}
                     >
@@ -380,13 +381,13 @@ function LandingPage() {
                       >
                         Buy Now
                       </Button>
-                      <IconButton
+                      {/* <IconButton
                         color="secondary"
                         aria-label="add to cart"
                         onClick={() => handleAddtocart(product?.id)}
                       >
                         <ShoppingCartIcon />
-                      </IconButton>
+                      </IconButton> */}
                     </Box>
                   </Paper>
                 </Grid>
@@ -395,7 +396,7 @@ function LandingPage() {
           </Grid>
         </Box>
 
-        {/* New Section with Image on Left and Text on Right */}
+       
         <Box
           sx={{
             display: "flex",
@@ -406,10 +407,10 @@ function LandingPage() {
             textAlign: { xs: "center", md: "left" },
           }}
         >
-          {/* Image on the Left */}
+          
           <Box
             component="img"
-            src="Assets/section1.png" // Replace with your image path
+            src="Assets/section1.png" 
             alt="Descriptive Alt Text"
             sx={{
               width: { xs: "100%", md: "40%" },
@@ -420,7 +421,7 @@ function LandingPage() {
             }}
           />
 
-          {/* Text Content on the Right */}
+          
           <Box sx={{ width: { xs: "100%", md: "50%" } }}>
             <Typography
               variant="h4"
@@ -456,7 +457,7 @@ function LandingPage() {
           </Box>
         </Box>
 
-        {/* Catalog Section */}
+       {/* section start */}
         <Box
           sx={{
             paddingY: 6,
@@ -479,7 +480,7 @@ function LandingPage() {
                   <Paper elevation={3} sx={{ padding: 2 }}>
                     <Box
                       sx={{
-                        overflow: "hidden", // Contain the zoom effect
+                        overflow: "hidden", 
                         borderRadius: 3,
                       }}
                     >
@@ -545,13 +546,13 @@ function LandingPage() {
                       >
                         Buy Now
                       </Button>
-                      <IconButton
+                      {/* <IconButton
                         color="secondary"
                         aria-label="add to cart"
                         onClick={() => handleAddtocart(product?.id)}
                       >
                         <ShoppingCartIcon />
-                      </IconButton>
+                      </IconButton> */}
                     </Box>
                   </Paper>
                 </Grid>
@@ -559,6 +560,7 @@ function LandingPage() {
               .slice(0, 8)}
           </Grid>
         </Box>
+
         <Box
           style={{
             display: "flex",
@@ -594,7 +596,7 @@ function LandingPage() {
             textAlign: { xs: "center", md: "left" },
           }}
         >
-          {/* Big Bold Text on the Left */}
+          
           <Box sx={{ width: { xs: "100%", md: "50%" } }}>
             <Typography
               variant="h3"
@@ -619,10 +621,10 @@ function LandingPage() {
             </Typography>
           </Box>
 
-          {/* Image on the Right */}
+         
           <Box
             component="img"
-            src="Assets/section2.png" // Replace with your image path
+            src="Assets/section2.png" 
             alt="Descriptive Alt Text"
             sx={{
               width: { xs: "100%", md: "40%" },
@@ -657,7 +659,7 @@ function LandingPage() {
           own every step with style! 😎
         </Marquee>
 
-        {/* Partners Section */}
+        {/* brand sectin */}
         <Box
           sx={{
             paddingY: 6,
