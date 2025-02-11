@@ -1,6 +1,6 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import { fetchsignup } from "../../Redux/Slice";
+import { fetchsignin, fetchsignup } from "../../Redux/Slice";
 import { useDispatch } from "react-redux";
 import Swal from "sweetalert2";
 import { Box, Container, TextField, Typography, Button } from "@mui/material";
@@ -29,26 +29,57 @@ const SignUpPage = () => {
     });
   };
 
-  const onSubmit = (data) => {
-    const trimmedData = {
-      fullName: data.fullName.trim(),
-      email: data.email.trim(),
-      password: data.password.trim(),
-      profileImage: data.profileImage[0]
-        ? URL.createObjectURL(data.profileImage[0])
-        : null,
-    };
+  // const onSubmit = (data) => {
+  //   const trimmedData = {
+  //     fullName: data.fullName.trim(),
+  //     email: data.email.trim(),
+  //     password: data.password.trim(),
+  //     profileImage: data.profileImage[0]
+  //       ? URL.createObjectURL(data.profileImage[0])
+  //       : null,
+  //   };
 
-    dispatch(fetchsignup(trimmedData))
-      .then(() => {
-        swlAlert("Account created successfully", "success");
-        navigate("/signin");
+  //   dispatch(fetchsignup(trimmedData))
+  //     .then(() => {
+  //       swlAlert("Account created successfully", "success");
+  //       navigate("/signin");
+  //     })
+  //     .catch(() => {
+  //       swlAlert("Submission failed! Please try again", "error");
+  //     });
+  // };
+
+
+  const onSubmit=(data)=>{
+    dispatch(fetchsignin())
+      .then((result) => {
+        const user = result.payload.find((x) => x.email === data.email);
+        if (!user) {
+          const trimmedData = {
+            fullName: data.fullName.trim(),
+            email: data.email.trim(),
+            password: data.password.trim(),
+            profileImage: data.profileImage[0]
+              ? URL.createObjectURL(data.profileImage[0])
+              : null,
+          };
+      
+          dispatch(fetchsignup(trimmedData))
+            .then(() => {
+              swlAlert("Account created successfully", "success");
+              navigate("/signin");
+            })
+            .catch(() => {
+              swlAlert("Submission failed! Please try again", "error");
+            });
+        } else {
+          swlAlert('Email already exist', 'error');
+        }
       })
       .catch(() => {
-        swlAlert("Submission failed! Please try again", "error");
+        swlAlert('Something wrong', 'error');
       });
-  };
-
+  }
   const profileImage = watch("profileImage");
 
   return (
@@ -162,7 +193,9 @@ const SignUpPage = () => {
                         files[0] &&
                         files[0].type.startsWith("image/")) ||
                       "Only image files are allowed.",
+                      
                   },
+                  
                 })}
               />
               <label htmlFor="file-upload">

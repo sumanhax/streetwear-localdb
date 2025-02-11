@@ -114,8 +114,14 @@ const AllProduct = () => {
     debounceSearch(event.target.value);
   };
 
-  const debounceSort = _.debounce((sortValue) => {
-    const sortedData = [...filteredData];
+  // const debounceSort = _.debounce((sortValue) => {
+   
+  // }, 500);
+
+  const handleSortChange = (event) => {
+    // debounceSort(event.target.value);
+const sortValue=event.target.value
+     const sortedData = [...filteredData];
     if (sortValue === "ab") {
       sortedData.sort((a, b) => a.product_name.localeCompare(b.product_name));
     } else if (sortValue === "ba") {
@@ -127,10 +133,6 @@ const AllProduct = () => {
     }
     setFilteredData(sortedData);
     setSortType(sortValue);
-  }, 500);
-
-  const handleSortChange = (event) => {
-    debounceSort(event.target.value);
   };
 
   const handleCategoryChange = (event) => {

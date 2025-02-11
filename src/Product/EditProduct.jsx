@@ -50,24 +50,50 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
     }
   }, [prevData, reset])
 
+  // const onSubmit = (data) => {
+  //   const newData = {
+  //     ...data,
+  //     product_img: imgState || prevData.product_img,
+  //   }
+  //   const dataId = {
+  //     newData: newData,
+  //     newid: newid,
+  //   }
+  //   dispatch(updateproduct(dataId))
+  //     .then(() => {
+  //       swlAlert("Product updated successfully", "success")
+  //       handleCloseEditProduct()
+  //     })
+  //     .catch((error) => {
+  //       console.log("Error submitting form", error)
+  //     })
+  // }
+
   const onSubmit = (data) => {
     const newData = {
       ...data,
+      product_name: data.product_name.trim(),
+      category: data.category.trim(),
+      origin: data.origin.trim(),
+      details: data.details.trim(),
       product_img: imgState || prevData.product_img,
-    }
+    };
+  
     const dataId = {
       newData: newData,
       newid: newid,
-    }
+    };
+  
     dispatch(updateproduct(dataId))
       .then(() => {
-        swlAlert("Product updated successfully", "success")
-        handleCloseEditProduct()
+        swlAlert("Product updated successfully", "success");
+        handleCloseEditProduct();
       })
       .catch((error) => {
-        console.log("Error submitting form", error)
-      })
-  }
+        console.log("Error submitting form", error);
+      });
+  };
+  
 
   const imgHandler = (file) => {
     if (file && file.type.startsWith("image/")) {
@@ -78,7 +104,7 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
       fileReader.readAsDataURL(file)
     } else if (file) {
       // swlAlert("Please upload an image file", "error")
-      alert("Please upload an image file")
+      alert("Only image files are allowed")
 
     }
   }
@@ -128,7 +154,7 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
             required
             error={!!error}
             helperText={error?.message}
-            onChange={(e) => field.onChange(e.target.value.trim())}
+            onChange={(e) => field.onChange(e.target.value)}
           />
         )}
       />
@@ -148,7 +174,7 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
             required
             error={!!error}
             helperText={error?.message}
-            onChange={(e) => field.onChange(e.target.value.trim())}
+            onChange={(e) => field.onChange(e.target.value)}
           />
         )}
       />
@@ -193,7 +219,7 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
             required
             error={!!error}
             helperText={error?.message}
-            onChange={(e) => field.onChange(e.target.value.trim())}
+            onChange={(e) => field.onChange(e.target.value)}
           />
         )}
       />
@@ -216,7 +242,7 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
             required
             error={!!error}
             helperText={error?.message}
-            onChange={(e) => field.onChange(e.target.value.trim())}
+            onChange={(e) => field.onChange(e.target.value)}
           />
         )}
       />
@@ -248,7 +274,7 @@ const EditProduct = ({ pid, handleCloseEditProduct }) => {
             }}
             type="file"
             fullWidth
-            sx={{ mt: 2 }}
+            sx={{ mt: 0 }}
             onChange={(event) => {
               const file = event.target.files?.[0]
               if (file) {
